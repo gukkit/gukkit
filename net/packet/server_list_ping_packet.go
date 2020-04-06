@@ -1,30 +1,37 @@
 package packet
 
+import (
+	"errors"
+)
+
 type Packet interface {
 	ID() int
 }
 
 type ServerListPingPacket struct {
-	Version		int
+	Version		int32
 	Address 	string
-	Port			int
-	NextState int
+	Port			uint16
+	NextState int32
 }
 
-func NewServerListPingPacket(reader *PacketDataReader) (*ServerListPingPacket, error) {
+func NewServerListPingPacket(reader *PacketReader) (pk *ServerListPingPacket, err error) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			err = errors.New(rec.(string))
+			return
+		}
+	}()
 
-	return nil, nil
+	pk = new(ServerListPingPacket)
+	pk.Version 	 = reader.ReadVarInt()
+	pk.Address 	 = reader.ReadString()
+	pk.Port 	 	 = reader.ReadUnsignedShort()
+	pk.NextState = reader.ReadVarInt()
+
+	return pk, nil
 }
 
 func(pk *ServerListPingPacket) ID() int {
 	return ServerListPingID
-}
-
-func ParsePacket(id int, data []byte) (pk *Packet, err error){
-	switch id {
-	case ServerListPingID:
-
-	}
-
-	return
 }

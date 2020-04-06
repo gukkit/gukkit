@@ -2,18 +2,35 @@ package packet
 
 import (
 	//"bytes"
-	//"errors"
-
+	"fmt"
+	"errors"
 	"encoding/binary"
 	"math"
 )
 
-type PacketDataReader struct {
+type PacketReader struct {
 	data []byte
 	idx  int
 }
 
-func(reader *PacketDataReader) ReadBoolean() bool {
+func NewPacketReader(data []byte) (pkReader *PacketReader, err error) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			pkReader = nil
+			err = errors.New(rec.(string))
+			return
+		}
+	}()
+
+	pkReader = &PacketReader{data: data}
+	pkLen := int(pkReader.ReadVarInt())
+	fmt.Println(pkLen)
+	pkReader.data = pkReader.ReadBytes(pkLen)
+	pkReader.idx = 0
+	return
+}
+
+func(reader *PacketReader) ReadBoolean() bool {
 	switch reader.ReadByte() {
 	case 0x00:
 		return false;
@@ -24,7 +41,7 @@ func(reader *PacketDataReader) ReadBoolean() bool {
 	}
 }
 
-func(reader *PacketDataReader) ReadByte() (b byte) {
+func(reader *PacketReader) ReadByte() (b byte) {
 	if reader.idx >= len(reader.data) {
 		panic("no byte any more")
 	}
@@ -34,29 +51,29 @@ func(reader *PacketDataReader) ReadByte() (b byte) {
 	return
 }
 
-func(reader *PacketDataReader) ReadUnsignedByte() uint8 {
+func(reader *PacketReader) ReadUnsignedByte() uint8 {
 	return uint8(reader.ReadByte())
 }
 
-func(reader *PacketDataReader) ReadShort() int16 {
+func(reader *PacketReader) ReadShort() int16 {
 	left, right := reader.ReadByte(), reader.ReadByte()
 
 	return int16(left) << 8 | int16(right)
 }
 
-func(reader *PacketDataReader) ReadUnsignedShort() uint16 {
+func(reader *PacketReader) ReadUnsignedShort() uint16 {
 	left, right := reader.ReadByte(), reader.ReadByte()
 
 	return uint16(int16(left) << 8 | int16(right))
 }
 
-func(reader *PacketDataReader) ReadInt() int32 {
+func(reader *PacketReader) ReadInt() int32 {
 	bs := reader.ReadBytes(4)
 
 	return int32(bs[0]) << 24 | int32(bs[1]) << 16 | int32(bs[2]) << 8 | int32(bs[3])
 }
 
-func(reader *PacketDataReader) ReadLong() (result int64) {
+func(reader *PacketReader) ReadLong() (result int64) {
 	bs := reader.ReadBytes(8)
 
 	for i := 0; i < 7; i++ {
@@ -74,35 +91,35 @@ func(reader *PacketDataReader) ReadLong() (result int64) {
 	return
 }
 
-func(reader *PacketDataReader) ReadFloat() float32 {
+func(reader *PacketReader) ReadFloat() float32 {
 	bits := binary.LittleEndian.Uint32(reader.ReadBytes(4))
 	return math.Float32frombits(bits)
 }
 
-func(reader *PacketDataReader) ReadDouble() float64 {
+func(reader *PacketReader) ReadDouble() float64 {
 	bits := binary.LittleEndian.Uint64(reader.ReadBytes(4))
 	return math.Float64frombits(bits)
 }
 
-func(reader *PacketDataReader) ReadString() string {
+func(reader *PacketReader) ReadString() string {
 	len := reader.ReadVarInt() //string len
 
-	return string(reader.ReadBytes(len))
+	return string(reader.ReadBytes(int(len)))
 }
 
-func(reader *PacketDataReader) ReadChat() {
-
-}
-
-func(reader *PacketDataReader) ReadIdentifier() {
+func(reader *PacketReader) ReadChat() {
 
 }
 
-func(reader *PacketDataReader) ReadVarInt() (result int) {
+func(reader *PacketReader) ReadIdentifier() {
+
+}
+
+func(reader *PacketReader) ReadVarInt() (result int32) {
 	for i := 0; ;i++ { //读数据前的长度标记
 		value := reader.ReadByte()
 
-		result |= int(value & 0b11111111) << int(7*i)
+		result |= int32(value & 0b11111111) << int(7*i)
 
 		if value&0b10000000 == 0 {
 			break
@@ -114,53 +131,52 @@ func(reader *PacketDataReader) ReadVarInt() (result int) {
 	return result
 }
 
-func(reader *PacketDataReader) ReadVarLong() int64 {
+func(reader *PacketReader) ReadVarLong() int64 {
 	return 0
 }
 
-func(reader *PacketDataReader) ReadEntityMetadata() {
+func(reader *PacketReader) ReadEntityMetadata() {
 
 }
 
-func(reader *PacketDataReader) ReadSlot() {
+func(reader *PacketReader) ReadSlot() {
 
 }
 
-func(reader *PacketDataReader) ReadNbtTag() {
+func(reader *PacketReader) ReadNbtTag() {
 
 }
 
-func(reader *PacketDataReader) ReadPosition() {
+func(reader *PacketReader) ReadPosition() {
 
 }
 
-func(reader *PacketDataReader) ReadAngle() {
+func(reader *PacketReader) ReadAngle() {
 
 }
 
-func(reader *PacketDataReader) ReadUUID() {
+func(reader *PacketReader) ReadUUID() {
 
 }
 
-func(reader *PacketDataReader) ReadOptionalX() {
+func(reader *PacketReader) ReadOptionalX() {
 
 }
 
-func(reader *PacketDataReader) ReadArrayOfX() {
+func(reader *PacketReader) ReadArrayOfX() {
 
 }
 
-func(reader *PacketDataReader) ReadXEnum() {
+func(reader *PacketReader) ReadXEnum() {
 
 }
 
-func(reader *PacketDataReader) ReadByteArray() {
+func(reader *PacketReader) ReadByteArray() {
 
 }
 
-
-func(reader *PacketDataReader) ReadBytes(n int) (b []byte) {
-	if reader.idx + n > reader.idx {
+func(reader *PacketReader) ReadBytes(n int) (b []byte) {
+	if reader.idx + n > len(reader.data) {
 		panic("no byte enough more")
 	}
 

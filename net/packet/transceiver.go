@@ -8,20 +8,13 @@ import (
 	"errors"
 )
 
-func RecvPacket(reader *bufio.Reader) (pk Packet, err error) {
-	len, err := readVarInt(reader)
+func RecvPacket(pkBytes []byte) (pk Packet, err error) {
+	pkReader, err := NewPacketReader(pkBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := reader.ReadBytes(byte(len))
-	if err != nil {
-		return nil, err
-	}
-
-	pkReader := &PacketDataReader{data: data[1:]}
-
-	switch data[0] {
+	switch pkReader.ReadVarInt() {
 	case 0x00:
 		pk, err = NewServerListPingPacket(pkReader)
 	default:

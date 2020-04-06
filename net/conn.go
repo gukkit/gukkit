@@ -2,8 +2,6 @@ package net
 
 import (
 	"bufio"
-//	"errors"
-//	"gukkit/net/packet"
 	gonet "net"
 )
 
