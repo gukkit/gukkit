@@ -9,6 +9,13 @@ type PacketWriter struct {
 	buf			 []byte
 }
 
+func NewPacketWriter(receiver io.Writer) *PacketWriter {
+	return &PacketWriter {
+		receiver: receiver,
+		buf: make([]byte, 512),
+	}
+}
+
 func(pw *PacketWriter) Write(data []byte) {
 	pw.buf = append(pw.buf, data...)
 }
@@ -30,6 +37,7 @@ func(pw *PacketWriter) Flush() (err error) {
 		}
 		break
 	}
+	pw.buf = nil
 	return
 }
 

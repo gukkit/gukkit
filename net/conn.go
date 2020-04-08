@@ -1,18 +1,27 @@
 package net
 
 import (
-	"bufio"
-	gonet "net"
+	"gukkit/net/packet"
+	"github.com/panjf2000/gnet"
 )
 
 type Conn struct {
-	reader *bufio.Reader
-	conn gonet.Conn
+	pkWriter *packet.PacketWriter
+
+	conn gnet.Conn //TCPConn
 }
 
-func newConn(conn gonet.Conn) *Conn {
+func newConn(conn gnet.Conn) *Conn {
 	return &Conn {
-		reader: bufio.NewReader(conn),
 		conn: conn,
+		//pkWriter: packet.NewPacketWriter(conn),
 	}
+}
+
+func(conn *Conn) WritePacket(pk packet.Packet) error {
+	return nil
+}
+
+func(conn *Conn) CreatedAt() int64 {
+	return conn.conn.Context().(*ConnContext).CreatedAt()
 }

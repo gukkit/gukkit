@@ -1,5 +1,9 @@
 package server
 
-type Player struct {
+import (
+	"gukkit/net"
+)
 
+type Player struct {
+	*net.Conn
 }

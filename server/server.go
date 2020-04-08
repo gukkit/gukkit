@@ -6,26 +6,18 @@ import (
 )
 
 type Server struct {
-	//*net.Listener
-
+	receiver *net.NetworkPacketReceiver
 	players	[]*Player
 }
 
 func NewServer(address string) (server *Server, err error){
 	server = new(Server)
 
-	// listener, err := net.Listen(server, address)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// server.Accepter()
-
 	return server, nil
 }
 
-func(server *Server) Run(address string) error {
-	return gnet.Serve(&net.NetworkEventHandler{}, address)
+func(server *Server) Listen(address string) error {
+	return gnet.Serve(server.receiver, address)
 }
 
 func(server *Server) Players() []*Player {

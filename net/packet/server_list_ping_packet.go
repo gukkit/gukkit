@@ -4,10 +4,6 @@ import (
 	"errors"
 )
 
-type Packet interface {
-	ID() int
-}
-
 type ServerListPingPacket struct {
 	Version		int32
 	Address 	string
@@ -15,7 +11,7 @@ type ServerListPingPacket struct {
 	NextState int32
 }
 
-func NewServerListPingPacket(reader *PacketReader) (pk *ServerListPingPacket, err error) {
+func EncodeServerListPingPacket(reader *PacketReader) (pk *ServerListPingPacket, err error) {
 	defer func() {
 		if rec := recover(); rec != nil {
 			err = errors.New(rec.(string))
