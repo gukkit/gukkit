@@ -5,10 +5,5 @@ import (
 )
 
 type Player struct {
-	conn net.Conn
+	*net.Conn
 }
-
-func(player *Player) SendMessage() error {
-	return nil
-}
-
