@@ -2,7 +2,8 @@ package gukkit
 
 import (
 	"fmt"
-	"gukkit/net"
+	"errors"
+	"gukkit/net/packet"
 	"github.com/panjf2000/gnet"
 )
 
@@ -26,8 +27,10 @@ G:::::G        G::::Gu::::u    u::::u   k:::::::::::k      k:::::::::::k      i:
 `
 
 type Server struct {
-	receiver *net.NetworkPacketReceiver
+	*gnet.EventServer
 	players	[]*Player
+	port 			int
+	maxPlayer int
 }
 
 func NewServer(address string) (server *Server, err error){
@@ -38,7 +41,7 @@ func NewServer(address string) (server *Server, err error){
 
 func(server *Server) Listen(address string) error {
 	fmt.Println(Logo)
-	return gnet.Serve(server.receiver, address)
+	return gnet.Serve(server, address)
 }
 
 func(server *Server) Players() []*Player {
@@ -51,4 +54,54 @@ func(server *Server) Close() error {
 
 func(server *Server) OuputMotd() {
 
+}
+
+func(server *Server) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
+	c.SetContext(&context{state: HandshakeStatus})
+	return
+}
+
+func(server *Server) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
+	fmt.Println("[OnClosed]", c, err)
+	return
+}
+
+func(server *Server) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
+	pk, err := server.RecvPacket(frame)
+	fmt.Println("[React]", pk, err, frame)
+	if err != nil {
+		c.Close()
+		return
+	}
+
+	context := c.Context().(*context);
+
+	switch context.Value("state") {
+	case HandshakeStatus:
+		switch pk.ID() {
+		case 0:
+
+		}
+
+	case ServerListStatus:
+
+	case PlayingStatus:
+
+	}
+	return
+}
+
+func(server *Server) RecvPacket(pkBytes []byte) (pk packet.Packet, err error) {
+	pkReader, err := packet.NewPacketReader(pkBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	switch pkReader.ReadVarInt() {
+	case 0x00:
+		pk, err = packet.EncodeServerListPingPacket(pkReader)
+	default:
+		return nil, errors.New("can find this packet")
+	}
+	return
 }

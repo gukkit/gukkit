@@ -21,7 +21,3 @@ func newConn(conn gnet.Conn) *Conn {
 func(conn *Conn) WritePacket(pk packet.Packet) error {
 	return nil
 }
-
-func(conn *Conn) CreatedAt() int64 {
-	return conn.conn.Context().(*ConnContext).CreatedAt()
-}
