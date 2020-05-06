@@ -2,7 +2,7 @@ package packet
 
 import (
 	//"bytes"
-	"fmt"
+	//"fmt"
 	"errors"
 	"encoding/binary"
 	"math"
@@ -24,7 +24,6 @@ func NewPacketReader(data []byte) (pkReader *PacketReader, err error) {
 
 	pkReader = &PacketReader{data: data}
 	pkLen := int(pkReader.ReadVarInt())
-	fmt.Println(pkLen)
 	pkReader.data = pkReader.ReadBytes(pkLen)
 	pkReader.idx = 0
 	return
