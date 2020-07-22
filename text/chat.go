@@ -6,15 +6,15 @@ import (
 )
 
 type Chat struct {
-	messages []Message
+	messages []ChatMessage
 	cur      int
 }
 
-func NewChat(msgs ...Message) Chat {
+func NewChat(msgs ...ChatMessage) Chat {
 	return Chat{}
 }
 
-type Message struct {
+type ChatMessage struct {
 	Bold   bool //加粗
 	Italic bool //斜体
 
@@ -29,7 +29,7 @@ type Message struct {
 	ClickEvent ClickEvent
 }
 
-func (message Message) JSON() (str string) {
+func (message ChatMessage) JSON() (str string) {
 	str += "{"
 	if message.Bold {
 		str += `"bold": "true",`

@@ -8,12 +8,3 @@ const (
 	StatusPongPacketID = 1
 
 )
-
-
-var (
-	StatusPacketSet = []Packet {
-		ServerListPingID: ServerListPingPacket{},
-
-	}
-)
-

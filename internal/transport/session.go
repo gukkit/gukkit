@@ -1,4 +1,4 @@
-package session
+package transport
 
 import (
 	"errors"
@@ -14,15 +14,14 @@ var (
 )
 
 const (
-	Initial   state = 0
-	StatusQuo state = 1
-	Playing   state = 2
+	Handshaking state = 0
+	Status      state = 1
+	Login       state = 2
+	Playing     state = 3
 )
 
 //玩家会话
 type Session struct {
-	manager *Manager
-
 	UUID  string
 	State state
 	Conn  gnet.Conn
@@ -36,14 +35,14 @@ func OpenInitSession(conn gnet.Conn) *Session {
 	}
 
 	return &Session{
-		State:      Initial,
+		State:      Handshaking,
 		Conn:       conn,
 		Compressed: false,
 	}
 }
 
 func (session *Session) NextState(nextState state) (err error) {
-	if session.State != Initial {
+	if session.State != Handshaking {
 		err = dupHandshakeErr
 		return
 	}

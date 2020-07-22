@@ -10,7 +10,7 @@ var (
 
 type VarInt int32
 
-func (varInt VarInt) Encode() (b []byte, err error) {
+func (varInt VarInt) Encode(w Writer) (err error) {
 	var value VarInt
 
 	for {
@@ -20,7 +20,8 @@ func (varInt VarInt) Encode() (b []byte, err error) {
 			value |= 0x80
 		}
 
-		b = append(b, byte(value))
+		err = w.WriteByte(byte(value))
+
 		if varInt == 0 {
 			break
 		}
@@ -29,12 +30,15 @@ func (varInt VarInt) Encode() (b []byte, err error) {
 	return
 }
 
-func (varInt *VarInt) Decode(bytes []byte) (n int, err error) {
+func (varInt *VarInt) Decode(r Reader) (n int, err error) {
 	var result int32
 
 	for { //读数据前的长度标记
-		value := bytes[n]
-		result |= int32(value & 0b11111111) << int32(7*n)
+		value, err := r.ReadByte()
+		if err != nil {
+			return n, err
+		}
+		result |= int32(value&0b11111111) << int32(7*n)
 
 		n++
 		if value&0b10000000 == 0 {
