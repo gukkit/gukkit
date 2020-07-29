@@ -1,8 +1,10 @@
 package transport
 
 import (
+	"bytes"
 	"errors"
-	"gukkit/net/packet"
+	"gukkit/internal/packet"
+	"sync"
 
 	"github.com/panjf2000/gnet"
 )
@@ -11,6 +13,14 @@ type state int32
 
 var (
 	dupHandshakeErr = errors.New("No duplication handshake")
+
+	BufferPool = &sync.Pool{
+		New: func() interface{} {
+			buf := make([]byte, 128)
+
+			return bytes.NewBuffer(buf)
+		},
+	}
 )
 
 const (
@@ -22,6 +32,8 @@ const (
 
 //玩家会话
 type Session struct {
+	PrivateKey string
+
 	UUID  string
 	State state
 	Conn  gnet.Conn
@@ -51,19 +63,15 @@ func (session *Session) NextState(nextState state) (err error) {
 	return
 }
 
-func (session *Session) SendPacket(packet packet.Packet) (err error) {
-	data, err := packet.Encode()
-	if err != nil {
+func (session *Session) SendPacket(pk packet.Clientbound) (err error) {
+	buffer := BufferPool.Get().(*bytes.Buffer)
+	buffer.Reset()
+	defer BufferPool.Put(buffer)
+
+	if err = pk.Encode(buffer); err != nil {
 		return err
 	}
 
-	if err = session.Conn.AsyncWrite(data); err != nil {
-		return
-	}
-
+	err = session.Conn.AsyncWrite(buffer.Bytes())
 	return
-}
-
-func (session *Session) RecvPacket(packet packet.Packet) {
-
 }

@@ -27,17 +27,20 @@ func (pk *DisconnectPacket) Encode(w packet.Writer) (err error) {
 type EncryptionRequestPacket struct {
 	packet.Clientbound
 
-	ServerID       types.String
-	PublicKeyLen   types.VarInt
-	PublicKey      types.ByteArray
-	VerifyTokenLen types.VarInt
-	VerifyToken    types.ByteArray
+	ServerID    types.String
+	PublicKey   types.ByteArray
+	VerifyToken types.ByteArray
+}
+
+func (pk *EncryptionRequestPacket) Encode(w packet.Writer) (err error) {
+
+	return
 }
 
 type LoginSuccessPacket struct {
 	packet.Clientbound
 
-	UUID     types.String
+	UUID     types.UUID
 	Username types.String
 }
 

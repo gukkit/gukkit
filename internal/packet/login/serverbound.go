@@ -18,23 +18,6 @@ type LoginStartPacket struct {
 	Name types.String
 }
 
-type EncryptionResponsePacket struct {
-	packet.Serverbound
-
-	ID           types.VarInt
-	SharedSecret types.ByteArray
-	VerifyToken  types.ByteArray
-}
-
-type LoginPluginResponsePacket struct {
-	packet.Serverbound
-
-	ID         types.VarInt
-	MessageID  types.VarInt
-	Successful types.Boolean
-	Data       types.ByteArray //Optional
-}
-
 func (pk *LoginStartPacket) Decode(r packet.Reader) (err error) {
 	if _, err = pk.ID.Decode(r); err != nil {
 		return
@@ -45,6 +28,14 @@ func (pk *LoginStartPacket) Decode(r packet.Reader) (err error) {
 	}
 
 	return
+}
+
+type EncryptionResponsePacket struct {
+	packet.Serverbound
+
+	ID           types.VarInt
+	SharedSecret types.ByteArray
+	VerifyToken  types.ByteArray
 }
 
 func (pk *EncryptionResponsePacket) Decode(r packet.Reader) (err error) {
@@ -61,6 +52,15 @@ func (pk *EncryptionResponsePacket) Decode(r packet.Reader) (err error) {
 	}
 
 	return
+}
+
+type LoginPluginResponsePacket struct {
+	packet.Serverbound
+
+	ID         types.VarInt
+	MessageID  types.VarInt
+	Successful types.Boolean
+	Data       types.ByteArray //Optional
 }
 
 func (pk *LoginPluginResponsePacket) Decode(r packet.Reader) (err error) {

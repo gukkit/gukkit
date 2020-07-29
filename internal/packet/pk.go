@@ -1,15 +1,18 @@
 package packet
 
-import "io"
+import (
+	pk "gukkit/net/packet"
+	"io"
+)
 
 //发送给客户端的包
 type Clientbound interface {
-	Encode(w Writer) (err error)
+	Encode(w pk.Writer) (err error)
 }
 
 //发送给服务端的包
 type Serverbound interface {
-	Decode(r Reader) (err error)
+	Decode(r pk.Reader) (err error)
 }
 
 type Writer interface {
