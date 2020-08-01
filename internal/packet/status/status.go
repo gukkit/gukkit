@@ -1,33 +1,49 @@
 package status
 
 import (
-	"gukkit/internal/packet"
 	"gukkit/net/data/types"
+	"gukkit/net/packet"
 )
 
 const (
 	ResponseID = 0
-	PongID     = 1
+	PingPongID = types.VarInt(1)
 	RequestID  = 0
-	PingID     = 1
 )
 
 type ResponsePacket struct {
 	packet.Clientbound
 }
 
-type PongPacket struct {
-	packet.Clientbound
-
-	Payload types.Long
-}
-
-type PingPacket struct {
-	packet.Serverbound
-
-	Payload types.Long
-}
-
 type RequestPacket struct {
 	packet.Serverbound
+
+	ID types.VarInt
+}
+
+type PingPongPacket struct {
+	packet.Serverbound
+	packet.Clientbound
+
+	ID      types.VarInt
+	Payload types.Long
+}
+
+func (pk *PingPongPacket) Encode(w packet.Writer) (err error) {
+	if err = PingPongID.Encode(w); err != nil {
+		return
+	}
+
+	err = pk.Payload.Encode(w)
+	return
+}
+
+func (pk *PingPongPacket) Decode(r packet.Reader) (err error) {
+	if pk.ID != PingPongID {
+		err = packet.DecodeIDNotEqualErr
+		return
+	}
+
+	_, err = pk.Payload.Decode(r)
+	return
 }

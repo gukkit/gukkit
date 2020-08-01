@@ -2,6 +2,11 @@ package transport
 
 import (
 	"github.com/panjf2000/gnet"
+	"github.com/valyala/bytebufferpool"
+)
+
+var (
+	BufferPool bytebufferpool.Pool
 )
 
 type Transporter struct {

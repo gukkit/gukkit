@@ -1,8 +1,8 @@
 package login
 
 import (
-	"gukkit/internal/packet"
 	"gukkit/net/data/types"
+	"gukkit/net/packet"
 )
 
 const (

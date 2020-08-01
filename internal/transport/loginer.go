@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"bytes"
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/rsa"
@@ -42,60 +41,19 @@ func (loginer *Loginer) Success() (err error) {
 }
 
 func (loginer *Loginer) Start(pk *login.LoginStartPacket) (err error) {
-	var (
-		privateKey *rsa.PrivateKey
-		publicKey  interface{}
+	pri, pub, err := generateKey()
 
-		buf = BufferPool.Get().(*bytes.Buffer)
-	)
-	buf.Reset()
-
-	loginer.Username = pk.Name
-
-	defer BufferPool.Put(buf)
-
-	if privateKey, err = rsa.GenerateKey(rand.Reader, 1024); err != nil {
-		return
-	}
-
-	derStream := x509.MarshalPKCS1PrivateKey(privateKey)
-
-	block := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: derStream,
-	}
-
-	if err = pem.Encode(buf, block); err != nil {
-		return
-	}
-
-	defer func(privateKey string) {
-		if err == nil {
-			loginer.session.PrivateKey = privateKey
-		}
-	}(buf.String())
-
-	derpStream, err := x509.MarshalPKIXPublicKey(&publicKey)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	block = &pem.Block{
-		Type:  "RSA PUBLIC KEY",
-		Bytes: derpStream,
-	}
-
-	buf.Reset()
-	if err = pem.Encode(buf, block); err != nil {
-		return
-	}
+	loginer.session.PrivateKey = pri
+	loginer.session.PublicKey = pub
 
 	h := md5.New()
-	h.Write(buf.Bytes())
-
 	request := &login.EncryptionRequestPacket{
 		ServerID:    types.String(""),
-		PublicKey:   buf.Bytes(),
+		PublicKey:   []byte(pub),
 		VerifyToken: h.Sum(nil),
 	}
 
@@ -104,12 +62,63 @@ func (loginer *Loginer) Start(pk *login.LoginStartPacket) (err error) {
 }
 
 func (loginer *Loginer) EncryptionResponse(pk *login.EncryptionResponsePacket) (err error) {
+	uuid := uuid.New()
 
 	success := &login.LoginSuccessPacket{
-		UUID:     types.UUID(uuid.New()),
-		Username: "",
+		UUID:     types.UUID(uuid),
+		Username: types.String(loginer.session.Username),
 	}
 
-	err = loginer.session.SendPacket(success)
+	if err = loginer.session.SendPacket(success); err != nil {
+		loginer.session.UUID = uuid.String()
+	}
+	return
+}
+
+func generateKey() (pri string, pub string, err error) {
+	var (
+		privateKey *rsa.PrivateKey
+		buf        = BufferPool.Get()
+
+		tempPriKey string
+	)
+
+	if privateKey, err = rsa.GenerateKey(rand.Reader, 1024); err != nil {
+		return
+	}
+
+	derStream := x509.MarshalPKCS1PrivateKey(privateKey)
+
+	block := &pem.Block{
+
+		Type: "RSA PRIVATE KEY",
+
+		Bytes: derStream,
+	}
+
+	if err = pem.Encode(buf, block); err != nil {
+		return
+	}
+
+	tempPriKey = buf.String()
+	buf.Reset()
+
+	// 生成公钥文件
+	derPkix, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return
+	}
+
+	block = &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: derPkix,
+	}
+
+	if err = pem.Encode(buf, block); err != nil {
+		return
+	}
+
+	pri = tempPriKey
+	pub = buf.String()
 	return
 }

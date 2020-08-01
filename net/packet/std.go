@@ -1,6 +1,13 @@
 package packet
 
-import "io"
+import (
+	"errors"
+	"io"
+)
+
+var (
+	DecodeIDNotEqualErr = errors.New("decode packet id not equal err")
+)
 
 //发送给客户端的包
 type Clientbound interface {
@@ -13,7 +20,6 @@ type Serverbound interface {
 }
 
 type Writer interface {
-	packet.
 	io.Writer
 	io.ByteWriter
 }
