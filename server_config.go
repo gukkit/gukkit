@@ -6,7 +6,7 @@ var (
 	defaultMotd = "Welcome Join Gukkit Server"
 )
 
-type Option func(server *server)
+type Option func(server *Server)
 
 type Config struct {
 	MOTD text.Chat

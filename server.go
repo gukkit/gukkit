@@ -2,46 +2,48 @@ package gukkit
 
 import (
 	"fmt"
-	//	"gukkit/net"
-
-	"gukkit/internal/ticker"
+	"gukkit/internal"
 	"gukkit/internal/transport"
 
 	"github.com/panjf2000/gnet"
 )
 
-type Server interface {
-	Listen(address string) error
-}
+const (
+	Version  = ""
+	Protocol = 49
+)
 
-type server struct {
+type Server struct {
+	internal.Motd
 	players   []*Player
 	port      int
 	maxPlayer int
-
-	ticker *ticker.Ticker
 }
 
-func NewServer(address string) (svr Server, err error) {
-	svr = &server{}
+func NewServer(address string) (svr *Server, err error) {
+	svr = &Server{}
 
 	return svr, nil
 }
 
-func (server *server) Listen(address string) error {
+func (server *Server) Listen(address string) error {
 	fmt.Println(Logo)
 	options := []gnet.Option{
 		gnet.WithMulticore(true),
 		gnet.WithCodec(&transport.Codec{}),
 	}
 
-	return gnet.Serve(&transport.Transporter{}, address, options...)
+	t := &transport.Transporter{}
+	return t.RunService(address)
 }
 
-func (server *server) Players() []*Player {
-	return server.players
+func (server *Server) Players() (players []*Player) {
+	players = make([]*Player, 0, len(server.players))
+	copy(server.players, players)
+
+	return
 }
 
-func (server *server) Close() error {
+func (server *Server) Shutdown() error {
 	return nil
 }

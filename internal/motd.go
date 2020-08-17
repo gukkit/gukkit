@@ -1,39 +1,27 @@
 package internal
 
-import (
-	"gukkit"
-	"os"
-	"io/ioutil"
-)
+import "gukkit/text"
 
 var defaultMotdTitle = "Gukkit Server for Minecraft By iHDJ"
 
-type MotdRender struct {
-	maxCap	*int32
-	online	*int32
-	players *[]*gukkit.Player
-
-	title		string
-	favicon []byte
+type Motd struct {
+	Version     MotdVersion `json:"version"`
+	Description text.Chat   `json:"description"`
+	Favicon     string      `json:"favicon"`
 }
 
-type MotdJsonResponse struct {
-	Favicon	string
+type MotdVersion struct {
+	Name     string `json:"name"`
+	Protocol int    `json:"protocol"`
 }
 
-func(motd *MotdRender) SetFaviconByFile(file *os.File) error {
-	prefix := "data:image/png;base64,"
-
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return err
-	}
-
-	motd.favicon = append([]byte(prefix), data...)
-	return nil
+type MotdPlayers struct {
+	Max    int              `json:"max"`
+	Online int              `json:"online"`
+	Sample []MotdPlayerInfo `json:"sample"`
 }
 
-func(motd *MotdRender) Render() (out []byte) {
-
+type MotdPlayerInfo struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
 }
-

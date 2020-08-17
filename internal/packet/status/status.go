@@ -6,13 +6,27 @@ import (
 )
 
 const (
-	ResponseID = 0
+	ResponseID = types.VarInt(0)
+	RequestID  = types.VarInt(0)
 	PingPongID = types.VarInt(1)
-	RequestID  = 0
 )
 
 type ResponsePacket struct {
 	packet.Clientbound
+
+	Message types.String
+}
+
+func (pk ResponsePacket) Encode(w packet.Writer) (err error) {
+	if err = ResponseID.Encode(w); err != nil {
+		return
+	}
+
+	if err = pk.Message.Encode(w); err != nil {
+		return
+	}
+
+	return
 }
 
 type RequestPacket struct {
@@ -29,7 +43,7 @@ type PingPongPacket struct {
 	Payload types.Long
 }
 
-func (pk *PingPongPacket) Encode(w packet.Writer) (err error) {
+func (pk PingPongPacket) Encode(w packet.Writer) (err error) {
 	if err = PingPongID.Encode(w); err != nil {
 		return
 	}

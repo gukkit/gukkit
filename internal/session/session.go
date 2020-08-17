@@ -1,8 +1,9 @@
-package transport
+package session
 
 import (
 	"errors"
 	"gukkit/internal/packet"
+	"sync"
 
 	"github.com/panjf2000/gnet"
 )
@@ -11,6 +12,8 @@ type state int32
 
 var (
 	dupHandshakeErr = errors.New("No duplication handshake")
+
+	SessionPool sync.Pool
 )
 
 const (
@@ -22,6 +25,7 @@ const (
 
 //玩家会话
 type Session struct {
+	buf      []byte
 	UUID     string
 	Username string
 	State    state
@@ -32,16 +36,19 @@ type Session struct {
 	PublicKey  string
 }
 
-func OpenInitSession(conn gnet.Conn) *Session {
-	if conn == nil {
-		return nil
+func OpenInitSession(conn gnet.Conn) (session *Session) {
+
+	if session, _ = SessionPool.Get().(*Session); session == nil {
+		session = &Session{
+			State:      Handshaking,
+			Conn:       conn,
+			Compressed: false,
+		}
+	} else {
+		session.Conn = conn
 	}
 
-	return &Session{
-		State:      Handshaking,
-		Conn:       conn,
-		Compressed: false,
-	}
+	return
 }
 
 func (session *Session) NextState(nextState state) (err error) {
@@ -54,24 +61,35 @@ func (session *Session) NextState(nextState state) (err error) {
 	return
 }
 
-func (session *Session) SendPacket(pk packet.Clientbound) (err error) {
-	buffer := BufferPool.Get()
-	buffer.Reset()
-	defer BufferPool.Put(buffer)
+func (session *Session) Write(b []byte) (n int, err error) {
+	session.buf = append(session.buf, b...)
+	return len(b), nil
+}
 
-	if err = pk.Encode(buffer); err != nil {
+func (session *Session) WriteByte(b byte) (err error) {
+	session.buf = append(session.buf, b)
+	return nil
+}
+
+func (session *Session) SendPacket(pk packet.Clientbound) (err error) {
+	if err = pk.Encode(session); err != nil {
 		return err
 	}
 
-	err = session.Conn.AsyncWrite(buffer.Bytes())
+	err = session.Conn.AsyncWrite(session.buf)
 	return
 }
 
-func (session *Session) Reset(conn gnet.Conn) {
+func (session *Session) Close() (err error) {
+	err = session.Conn.Close()
+	return
+}
+
+func (session *Session) Reset() {
 	session.UUID = ""
 	session.Username = ""
 	session.State = Handshaking
-	session.Conn = conn
+	session.Conn = nil
 	session.Compressed = false
 	session.PrivateKey = ""
 	session.PublicKey = ""

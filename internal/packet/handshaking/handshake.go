@@ -5,6 +5,10 @@ import (
 	"gukkit/net/data/types"
 )
 
+const (
+	HandshakePacketID = types.VarInt(0x00)
+)
+
 type HandshakePacket struct {
 	packet.Serverbound
 

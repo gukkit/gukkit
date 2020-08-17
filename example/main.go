@@ -1,17 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"gukkit"
+)
 
 //this from go.mod, but you can set github/ihdj/gukkit
 
 func main() {
-	str := "ChinaHDJ"
+	svr, _ := gukkit.NewServer(":25525")
 
-	defer fmt.Println(str)
-
-	str = "HDJ"
-
-	//svr, _ := gukkit.NewServer(":25525")
-
-	//fmt.Println(svr.Listen(":25525"))
+	fmt.Println(svr.Listen(":25525"))
 }
