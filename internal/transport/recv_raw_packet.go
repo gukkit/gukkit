@@ -3,11 +3,17 @@ package transport
 import (
 	"bytes"
 	"compress/zlib"
+	"errors"
 	"io/ioutil"
 	"sync"
 
 	"gukkit/net/data/types"
+	"gukkit/net/packet"
 	"gukkit/utils"
+)
+
+var (
+	overflowByteArray = errors.New("byte arry was overflow")
 )
 
 // var (
@@ -36,7 +42,10 @@ type recvRawPacket struct {
 }
 
 func (pk *recvRawPacket) Read(b []byte) (n int, err error) {
-
+	if len(b) > len(pk.Data) {
+		err = overflowByteArray
+		return
+	}
 	return
 }
 
@@ -108,5 +117,10 @@ func (pk *recvRawPacket) unpackWithoutCompressed() (err error) {
 		pk.Data = pk.rawData[pk.rawIndex:]
 		pk.DataLen = types.VarInt(len(pk.Data))
 	}
+	return
+}
+
+func (pk *recvRawPacket) ConvPacket(spk packet.Serverbound) (err error) {
+	err = spk.Decode(pk)
 	return
 }

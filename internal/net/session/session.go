@@ -14,9 +14,9 @@ var (
 )
 
 const (
-	Initial   state = 0
-	StatusQuo state = 1
-	Playing   state = 2
+	Initial     state = 0
+	Handshaking state = 1
+	Play        state = 2
 )
 
 //玩家会话
@@ -53,18 +53,22 @@ func (session *Session) NextState(nextState state) (err error) {
 }
 
 func (session *Session) SendPacket(packet packet.Packet) (err error) {
-	data, err := packet.Encode()
-	if err != nil {
-		return err
-	}
+	// data, err := packet.Encode()
+	// if err != nil {
+	// 	return err
+	// }
 
-	if err = session.Conn.AsyncWrite(data); err != nil {
-		return
-	}
+	// if err = session.Conn.AsyncWrite(data); err != nil {
+	// 	return
+	// }
 
 	return
 }
 
 func (session *Session) RecvPacket(packet packet.Packet) {
 
+}
+
+func (session *Session) Disconnect() (err error) {
+	return
 }

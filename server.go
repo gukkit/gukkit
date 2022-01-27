@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"gukkit/internal"
 	"gukkit/internal/transport"
-
-	"github.com/panjf2000/gnet"
 )
 
 const (
@@ -14,7 +12,7 @@ const (
 )
 
 type Server struct {
-	internal.Motd
+	motd      internal.Motd
 	players   []*Player
 	port      int
 	maxPlayer int
@@ -26,15 +24,13 @@ func NewServer(address string) (svr *Server, err error) {
 	return svr, nil
 }
 
+func (server *Server) Motd() internal.Motd {
+	return server.motd
+}
+
 func (server *Server) Listen(address string) error {
 	fmt.Println(Logo)
-	options := []gnet.Option{
-		gnet.WithMulticore(true),
-		gnet.WithCodec(&transport.Codec{}),
-	}
-
-	t := &transport.Transporter{}
-	return t.RunService(address)
+	return transport.Serve(server, address)
 }
 
 func (server *Server) Players() (players []*Player) {

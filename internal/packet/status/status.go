@@ -1,6 +1,7 @@
 package status
 
 import (
+	"gukkit/net"
 	"gukkit/net/data/types"
 	"gukkit/net/packet"
 )
@@ -33,6 +34,14 @@ type RequestPacket struct {
 	packet.Serverbound
 
 	ID types.VarInt
+}
+
+func BuildPingPacket(data *net.DataPacket) *PingPongPacket {
+	pk := &PingPongPacket{}
+	pk.ID = PingPongID
+	// pk.Payload = data.
+
+	return pk
 }
 
 type PingPongPacket struct {

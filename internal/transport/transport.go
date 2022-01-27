@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"fmt"
+	"gukkit/internal/interfaces"
 	"gukkit/internal/session"
 
 	"github.com/panjf2000/gnet"
@@ -14,57 +14,56 @@ var (
 
 type Transporter struct {
 	*gnet.EventServer
+
+	reactor *Reactor
+}
+
+func Serve(server interfaces.Server, address string) (err error) {
+	transporter := Transporter{
+		reactor: &Reactor{
+			server: server,
+		},
+	}
+
+	err = transporter.RunService(address)
+	return
 }
 
 func (t *Transporter) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
-	c.SetContext(OpenInitSession(c))
+	c.SetContext(session.OpenInitSession(c))
 	return
 }
 
 func (t *Transporter) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
-	session := c.Context().(*Session)
-	session.Reset()
-
-	SessionPool.Put(session)
+	session := c.Context().(session.Session)
+	session.Release()
 	return
 }
 
 func (t *Transporter) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
 	var (
 		recvRaw = recvRawPacketPool.Get().(*recvRawPacket)
-		sess    = c.Context().(*Session)
+		sess    = c.Context().(session.Session)
 		err     error
 	)
-	defer recvRawPacketPool.Put(recvRaw)
-	fmt.Println(frame)
 
-	if err = recvRaw.Unpack(frame, sess.Compressed); err != nil {
+	defer recvRawPacketPool.Put(recvRaw)
+
+	if err = recvRaw.Unpack(frame, sess.Compressed()); err != nil {
 		sess.Close()
 		return
 	}
 
-	switch sess.State {
-	case Handshaking:
-
-	case Status:
-		sSession := sess.(*session.StatusSession)
-
-		sSession.Ping(nil)
-	case Login:
-
-	case Playing:
-
-	}
-
+	t.reactor.react(sess, recvRaw)
 	return
 }
 
 func (t *Transporter) RunService(address string) (err error) {
 	options := []gnet.Option{
 		gnet.WithMulticore(true),
-		gnet.WithCodec(&transport.Codec{}),
+		gnet.WithCodec(&Codec{}),
 	}
 
-	err = gnet.Serve(&transport.Transporter{}, address, options...)
+	err = gnet.Serve(&Transporter{}, address, options...)
 	return
 }

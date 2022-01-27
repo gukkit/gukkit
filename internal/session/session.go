@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	"gukkit/internal/interfaces"
 	"gukkit/internal/packet"
 	"sync"
 
@@ -23,55 +24,99 @@ const (
 	Playing     state = 3
 )
 
+type Session interface {
+	State() state
+	NextState(nextState state, server interfaces.Server) (err error)
+	Compressed() bool
+	UUID() string
+	Username() string
+	SendPacket(pk packet.Clientbound) (err error)
+	Release()
+
+	Write(b []byte) (n int, err error)
+	WriteByte(b byte) (err error)
+	Close() (err error)
+}
+
 //玩家会话
-type Session struct {
+type session struct {
 	buf      []byte
-	UUID     string
-	Username string
-	State    state
+	uuid     string
+	username string
+	state    state
 	Conn     gnet.Conn
 
-	Compressed bool
+	compressed bool
 	PrivateKey string
 	PublicKey  string
 }
 
-func OpenInitSession(conn gnet.Conn) (session *Session) {
+func OpenInitSession(conn gnet.Conn) Session {
+	sess, _ := SessionPool.Get().(*session)
 
-	if session, _ = SessionPool.Get().(*Session); session == nil {
-		session = &Session{
-			State:      Handshaking,
+	if sess == nil {
+		sess = &session{
+			state:      Handshaking,
 			Conn:       conn,
-			Compressed: false,
+			compressed: false,
 		}
 	} else {
-		session.Conn = conn
+		sess.Conn = conn
 	}
 
-	return
+	return sess
 }
 
-func (session *Session) NextState(nextState state) (err error) {
-	if session.State != Handshaking {
+func (session *session) Username() string {
+	return session.username
+}
+
+func (session *session) UUID() string {
+	return session.uuid
+}
+
+func (session *session) State() state {
+	return session.state
+}
+
+func (session *session) Compressed() bool {
+	return session.compressed
+}
+
+func (session *session) NextState(nextState state, server interfaces.Server) (err error) {
+	if session.state != Handshaking {
 		err = dupHandshakeErr
 		return
 	}
 
-	session.State = nextState
+	if nextState == Status {
+		statusSession := &StatusSession{
+			session: session,
+			server:  server,
+		}
+
+		session.Conn.SetContext(statusSession)
+	}
+
+	if nextState == Login {
+		//todo
+	}
+
+	session.state = nextState
 	return
 }
 
-func (session *Session) Write(b []byte) (n int, err error) {
+func (session *session) Write(b []byte) (n int, err error) {
 	session.buf = append(session.buf, b...)
 	return len(b), nil
 }
 
-func (session *Session) WriteByte(b byte) (err error) {
+func (session *session) WriteByte(b byte) (err error) {
 	session.buf = append(session.buf, b)
 	return nil
 }
 
-func (session *Session) SendPacket(pk packet.Clientbound) (err error) {
+func (session *session) SendPacket(pk packet.Clientbound) (err error) {
 	if err = pk.Encode(session); err != nil {
 		return err
 	}
@@ -80,17 +125,23 @@ func (session *Session) SendPacket(pk packet.Clientbound) (err error) {
 	return
 }
 
-func (session *Session) Close() (err error) {
+func (session *session) Close() (err error) {
 	err = session.Conn.Close()
 	return
 }
 
-func (session *Session) Reset() {
-	session.UUID = ""
-	session.Username = ""
-	session.State = Handshaking
+func (session *session) Reset() {
+	session.uuid = ""
+	session.username = ""
+	session.state = Handshaking
 	session.Conn = nil
-	session.Compressed = false
+	session.compressed = false
 	session.PrivateKey = ""
 	session.PublicKey = ""
+}
+
+func (session *session) Release() {
+	session.Reset()
+
+	SessionPool.Put(session)
 }

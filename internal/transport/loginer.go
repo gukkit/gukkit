@@ -1,124 +1,111 @@
 package transport
 
-import (
-	"crypto/md5"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
-	"gukkit/internal/packet/login"
-	"gukkit/net/data/types"
-	"sync"
+// var (
+// 	LoginerPool = &sync.Pool{
+// 		New: func() interface{} {
+// 			return &Loginer{}
+// 		},
+// 	}
 
-	"github.com/google/uuid"
-)
+// 	LoginStart         = LoginState(0)
+// 	EncryptionRequest  = LoginState(1)
+// 	EncryptionResponse = LoginState(2)
+// 	LoginSuccess       = LoginState(3)
+// )
 
-var (
-	LoginerPool = &sync.Pool{
-		New: func() interface{} {
-			return &Loginer{}
-		},
-	}
+// type LoginState int
 
-	LoginStart         = LoginState(0)
-	EncryptionRequest  = LoginState(1)
-	EncryptionResponse = LoginState(2)
-	LoginSuccess       = LoginState(3)
-)
+// type Loginer struct {
+// 	session *Session
 
-type LoginState int
+// 	Username    types.String
+// 	VerifyToken types.ByteArray
+// }
 
-type Loginer struct {
-	session *Session
+// func (loginer *Loginer) Success() (err error) {
+// 	err = loginer.session.NextState(Playing)
+// 	return
+// }
 
-	Username    types.String
-	VerifyToken types.ByteArray
-}
+// func (loginer *Loginer) Start(pk *login.LoginStartPacket) (err error) {
+// 	pri, pub, err := generateKey()
 
-func (loginer *Loginer) Success() (err error) {
-	err = loginer.session.NextState(Playing)
-	return
-}
+// 	if err != nil {
+// 		return err
+// 	}
 
-func (loginer *Loginer) Start(pk *login.LoginStartPacket) (err error) {
-	pri, pub, err := generateKey()
+// 	loginer.session.PrivateKey = pri
+// 	loginer.session.PublicKey = pub
 
-	if err != nil {
-		return err
-	}
+// 	h := md5.New()
+// 	request := &login.EncryptionRequestPacket{
+// 		ServerID:    types.String(""),
+// 		PublicKey:   []byte(pub),
+// 		VerifyToken: h.Sum(nil),
+// 	}
 
-	loginer.session.PrivateKey = pri
-	loginer.session.PublicKey = pub
+// 	err = loginer.session.SendPacket(request)
+// 	return
+// }
 
-	h := md5.New()
-	request := &login.EncryptionRequestPacket{
-		ServerID:    types.String(""),
-		PublicKey:   []byte(pub),
-		VerifyToken: h.Sum(nil),
-	}
+// func (loginer *Loginer) EncryptionResponse(pk *login.EncryptionResponsePacket) (err error) {
+// 	uuid := uuid.New()
 
-	err = loginer.session.SendPacket(request)
-	return
-}
+// 	success := &login.LoginSuccessPacket{
+// 		UUID:     types.UUID(uuid),
+// 		Username: types.String(loginer.session.Username),
+// 	}
 
-func (loginer *Loginer) EncryptionResponse(pk *login.EncryptionResponsePacket) (err error) {
-	uuid := uuid.New()
+// 	if err = loginer.session.SendPacket(success); err != nil {
+// 		loginer.session.UUID = uuid.String()
+// 	}
+// 	return
+// }
 
-	success := &login.LoginSuccessPacket{
-		UUID:     types.UUID(uuid),
-		Username: types.String(loginer.session.Username),
-	}
+// func generateKey() (pri string, pub string, err error) {
+// 	var (
+// 		privateKey *rsa.PrivateKey
+// 		buf        = BufferPool.Get()
 
-	if err = loginer.session.SendPacket(success); err != nil {
-		loginer.session.UUID = uuid.String()
-	}
-	return
-}
+// 		tempPriKey string
+// 	)
 
-func generateKey() (pri string, pub string, err error) {
-	var (
-		privateKey *rsa.PrivateKey
-		buf        = BufferPool.Get()
+// 	if privateKey, err = rsa.GenerateKey(rand.Reader, 1024); err != nil {
+// 		return
+// 	}
 
-		tempPriKey string
-	)
+// 	derStream := x509.MarshalPKCS1PrivateKey(privateKey)
 
-	if privateKey, err = rsa.GenerateKey(rand.Reader, 1024); err != nil {
-		return
-	}
+// 	block := &pem.Block{
 
-	derStream := x509.MarshalPKCS1PrivateKey(privateKey)
+// 		Type: "RSA PRIVATE KEY",
 
-	block := &pem.Block{
+// 		Bytes: derStream,
+// 	}
 
-		Type: "RSA PRIVATE KEY",
+// 	if err = pem.Encode(buf, block); err != nil {
+// 		return
+// 	}
 
-		Bytes: derStream,
-	}
+// 	tempPriKey = buf.String()
+// 	buf.Reset()
 
-	if err = pem.Encode(buf, block); err != nil {
-		return
-	}
+// 	// 生成公钥文件
+// 	derPkix, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+// 	if err != nil {
+// 		return
+// 	}
 
-	tempPriKey = buf.String()
-	buf.Reset()
+// 	block = &pem.Block{
+// 		Type:  "PUBLIC KEY",
+// 		Bytes: derPkix,
+// 	}
 
-	// 生成公钥文件
-	derPkix, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	if err != nil {
-		return
-	}
+// 	if err = pem.Encode(buf, block); err != nil {
+// 		return
+// 	}
 
-	block = &pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: derPkix,
-	}
-
-	if err = pem.Encode(buf, block); err != nil {
-		return
-	}
-
-	pri = tempPriKey
-	pub = buf.String()
-	return
-}
+// 	pri = tempPriKey
+// 	pub = buf.String()
+// 	return
+// }

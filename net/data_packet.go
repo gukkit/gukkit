@@ -9,7 +9,7 @@ import (
 )
 
 type DataPacket struct {
-	ConnType connType //当前连接的状态，用于分析具体包内容
+	//ConnType connType //当前连接的状态，用于分析具体包内容
 
 	buf *bytes.Buffer
 
@@ -57,7 +57,7 @@ func (dataPk *DataPacket) readVarInt() (varInt types.VarInt, err error) {
 	}
 
 	if n == 0 {
-		return 0, RawDataInComplete
+		return 0, nil //RawDataInComplete
 	}
 
 	dataPk.rawIndex += n
@@ -96,5 +96,85 @@ func (pk *DataPacket) unpackWithoutCompressed() (err error) {
 		pk.Data = pk.rawData[pk.rawIndex:]
 		pk.DataLen = types.VarInt(len(pk.Data))
 	}
+	return
+}
+
+func (pk *DataPacket) ParseAngle(t *types.Angle) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseBoolean(t *types.Boolean) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseByteArray(t *types.ByteArray) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseByte(t *types.Byte) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseFloat(t *types.Float) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseChat(t *types.Chat) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseIdentifier(t *types.Identifier) (err error) {
+	// _, err = t.
+	return
+}
+
+func (pk *DataPacket) ParseVarInt(t *types.VarInt) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseInt(t *types.Int) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseLong(t *types.Long) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParsePosition(t *types.Position) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseShort(t *types.Short) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseString(t *types.String) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseUnsignedByte(t *types.UnsignedByte) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseUnsignedShort(t *types.UnsignedShort) (err error) {
+	_, err = t.Decode(pk.buf)
+	return
+}
+
+func (pk *DataPacket) ParseUnsignedLong(t *types.UnsignedLong) (err error) {
+	_, err = t.Decode(pk.buf)
 	return
 }

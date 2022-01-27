@@ -2,6 +2,7 @@ package login
 
 import (
 	"gukkit/internal/packet"
+	"gukkit/net"
 	"gukkit/net/data/types"
 )
 
@@ -18,15 +19,12 @@ type LoginStartPacket struct {
 	Name types.String
 }
 
-func (pk *LoginStartPacket) Decode(r packet.Reader) (err error) {
-	if _, err = pk.ID.Decode(r); err != nil {
+func (pk *LoginStartPacket) Decode(p *net.DataPacket) (err error) {
+	if err = p.ParseVarInt(&pk.ID); err != nil {
 		return
 	}
 
-	if _, err = pk.Name.Decode(r); err != nil {
-		return
-	}
-
+	err = p.ParseString(&pk.Name)
 	return
 }
 

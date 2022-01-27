@@ -1,8 +1,9 @@
 package handshaking
 
 import (
-	"gukkit/internal/packet"
+	"gukkit/net"
 	"gukkit/net/data/types"
+	"gukkit/net/packet"
 )
 
 const (
@@ -17,6 +18,14 @@ type HandshakePacket struct {
 	Address   types.String
 	Port      types.UnsignedShort
 	NextState types.VarInt //value 1 for status, 2 for login
+}
+
+func BuildHandshakePacket(data *net.DataPacket) *HandshakePacket {
+	pk := &HandshakePacket{ID: HandshakePacketID}
+
+	pk.ID = HandshakePacketID
+
+	return nil
 }
 
 func (pk *HandshakePacket) Decode(r packet.Reader) (err error) {

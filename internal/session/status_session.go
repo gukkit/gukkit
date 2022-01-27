@@ -12,7 +12,7 @@ import (
 
 type StatusSession struct {
 	server interfaces.Server
-	*Session
+	*session
 }
 
 // return PingPongPacket

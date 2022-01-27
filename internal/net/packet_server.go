@@ -1,56 +1,53 @@
 package net
 
 import (
-	"gukkit/internal/intfac"
 	"gukkit/internal/net/session"
-	"gukkit/net"
-	"sync"
+	"gukkit/net/packet"
 
 	"github.com/panjf2000/gnet"
 )
 
-var dataPacketPool *sync.Pool = &sync.Pool{
-	New: func() interface{} {
-		return &net.DataPacket{}
-	},
-}
-
-type PacketServer struct {
+type NetworkListener struct {
 	*gnet.EventServer
-
-	server intfac.Server
-	notify <-chan *net.DataPacket
+	statePacketNofity chan packet.Packet
+	gamePacketNotify  chan packet.Packet
 }
 
-func (server *PacketServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
+func (listener *NetworkListener) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	c.SetContext(session.OpenInitSession(c))
 	return
 }
 
-func (server *PacketServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
+func (listener *NetworkListener) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 	curSession := c.Context().(*session.Session)
-
-	if curSession.State == session.Playing {
+	if curSession.State == session.Play {
 		//玩家离开了游戏
 	}
 	return
 }
 
-func (server *PacketServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
-	dataPacket := dataPacketPool.Get().(*net.DataPacket)
-	defer dataPacketPool.Put(dataPacket)
+func (listener *NetworkListener) React(data []byte, c gnet.Conn) (out []byte, action gnet.Action) {
+	dataPacket := dataPool.Get()
+	defer dataPool.Put(dataPacket)
 
 	session := c.Context().(*session.Session)
 
-	if err := dataPacket.Unpack(frame, session.Compressed); err != nil {
+	if err := dataPacket.Unpack(data, session.Compressed); err != nil {
 		c.Close()
 		return
 	}
 
-	server.onReact(dataPacket, session)
+	// pk, err := parsePK(dataPacket)
+	// if err != nil {
+	// 	c.Close()
+	// 	return
+	// }
+
+	// listener.packetNotify <- pk
+
 	return
 }
 
-func (server *PacketServer) onReact(dataPacket *net.DataPacket, session *session.Session) {
-
+func (listener *NetworkListener) notifyChannel() <-chan packet.Packet {
+	return nil
 }

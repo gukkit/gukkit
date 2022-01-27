@@ -2,7 +2,7 @@ package gukkit
 
 import (
 	"bytes"
-	"gukkit/internal/transport"
+	"gukkit/internal/session"
 	"gukkit/net/packet"
 	"gukkit/text"
 )
@@ -10,8 +10,12 @@ import (
 type Player struct {
 	server *Server
 
-	session  *transport.Session
+	x float64
+	y float64
+	z float64
+
 	username string
+	session  session.Session
 }
 
 func (player *Player) Username() string {
